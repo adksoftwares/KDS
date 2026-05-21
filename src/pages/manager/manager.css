@@ -1,0 +1,218 @@
+/* ── Login Page ───────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 32px;
+  gap: 10px;
+}
+.login-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+}
+.login-brand h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+
+/* ── Login Form ───────────────────────────────────── */
+.login-form { display: flex; flex-direction: column; }
+.login-form h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+
+.form-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-field label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.input-icon-wrap { position: relative; }
+.input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+.input-padded { padding-left: 40px; }
+.input-icon-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; }
+.input-icon-right:hover { color: var(--text-primary); }
+
+.otp-input {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 12px;
+  padding: 16px;
+}
+
+/* ── TOTP Setup ───────────────────────────────────── */
+.totp-setup-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.totp-setup-header h3 { margin: 0; font-size: 1.1rem; }
+
+.qr-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+.qr-inner {
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-md);
+  display: inline-block;
+}
+
+/* ── Manager Page Layout ──────────────────────────── */
+.manager-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.manager-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.manager-topbar .logo-text h1 {
+  background: linear-gradient(90deg, #a78bfa, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.15rem;
+}
+
+.manager-nav {
+  display: flex;
+  gap: 4px;
+}
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.nav-btn:hover { background: var(--surface-2); color: var(--text-primary); }
+.nav-btn.active {
+  background: rgba(139,92,246,.12);
+  border-color: rgba(139,92,246,.3);
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+.manager-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* ── Metrics ──────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.metric-card {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.metric-icon {
+  width: 52px; height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.metric-info h4 { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 6px; }
+.metric-val { font-size: 2rem; font-weight: 800; line-height: 1; }
+
+.activity-card { padding: 24px; }
+.activity-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 20px; }
+
+/* ── Menu Manager ─────────────────────────────────── */
+.menu-manager-card { padding: 24px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.card-header h4 { font-size: 0.9rem; font-weight: 700; }
+
+.item-thumb { width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface-2); }
+
+.toggle-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.toggle-track {
+  width: 42px; height: 24px; border-radius: 99px;
+  background: var(--border);
+  position: relative; transition: background 0.2s;
+}
+.toggle-track.on { background: var(--ready); }
+.toggle-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: white; position: absolute;
+  top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.toggle-track.on .toggle-thumb { transform: translateX(18px); }
+
+/* ── QR Generator ─────────────────────────────────── */
+.qr-generator-card { padding: 24px; }
+.qr-gen-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+@media (max-width: 700px) { .qr-gen-layout { grid-template-columns: 1fr; } }
+.qr-gen-form { display: flex; flex-direction: column; gap: 20px; }
+.qr-gen-form label { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); display: block; margin-bottom: 8px; }
+.qr-preview {
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-muted);
+  padding: 24px;
+  text-align: center;
+}
+.qr-white-card {
+  background: white;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.qr-table-label { color: black; font-weight: 800; font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; }
+.qr-url { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); word-break: break-all; text-align: center; }

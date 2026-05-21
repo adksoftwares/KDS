@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "436041295134",
+    "project_id": "live-kitchen-display",
+    "storage_bucket": "live-kitchen-display.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436041295134:android:2fd9d7e73b2f43f1f7d50f",
+        "android_client_info": {
+          "package_name": "com.kds.kitchen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQG7stL5dafBsNlfWl6kx7vCLMnL-qQUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
