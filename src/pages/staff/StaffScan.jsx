@@ -83,6 +83,18 @@ export default function StaffScan() {
     };
   }, [isScanning, navigate]);
 
+  const handleSimulateScan = () => {
+    const mockUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
+    if (mockUsers.length === 0) {
+      setError("No mock users available to simulate.");
+      setIsScanning(false);
+      return;
+    }
+    const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+    setIsScanning(false);
+    navigate(`/staff/order/${randomUser.id}`);
+  };
+
   const handleScanSubmit = (e) => {
     e.preventDefault();
     const cleanId = regId.trim().toUpperCase();
@@ -209,6 +221,13 @@ export default function StaffScan() {
             </div>
 
             <p className="text-xs text-slate-400">Position the customer's mobile profile QR Code within the camera frame for instant check-in detection.</p>
+
+            <button
+              onClick={handleSimulateScan}
+              className="w-full py-2.5 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/20 rounded-xl text-xs font-bold transition-all mt-4"
+            >
+              💡 Simulate QR Code Scan (Demo)
+            </button>
           </div>
         </div>
       )}

@@ -53,11 +53,51 @@ export default function UserMobileApp() {
     return () => unsubscribe();
   }, [currentUser, view]);
 
+  const [audioAlertsPrimed, setAudioAlertsPrimed] = useState(false);
+
+  const playSynthesizedBell = () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      
+      const ringTone = (time, frequency, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(frequency, time);
+        gain.gain.setValueAtTime(0.6, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + duration);
+      };
+
+      const now = ctx.currentTime;
+      ringTone(now, 880, 1.2);
+      ringTone(now + 0.08, 1320, 1.0);
+      ringTone(now + 0.35, 880, 1.2);
+      ringTone(now + 0.43, 1320, 1.0);
+    } catch (e) {
+      console.warn("Synthesizer chime failed:", e);
+    }
+  };
+
+  const primeAudioContext = () => {
+    playSynthesizedBell();
+    setAudioAlertsPrimed(true);
+  };
+
   const playBellChime = () => {
+    // 1. Play Synthesized Chime (Guaranteed browser-native double chime)
+    playSynthesizedBell();
+
+    // 2. Play Physical Audio WAV File
     if (bellAudioRef.current) {
       bellAudioRef.current.currentTime = 0;
       bellAudioRef.current.play().catch(err => {
-        console.warn("Audio playback blocked by browser gesture constraints:", err);
+        console.warn("Audio file playback blocked, synthesized chime played.", err);
       });
     }
   };
@@ -370,6 +410,28 @@ export default function UserMobileApp() {
                   </div>
                   <p className="text-[10px] text-slate-400">Present this QR code to the cashier counter to register your food items.</p>
                 </div>
+
+                {/* Visual Audio Alert Primer Banner */}
+                {!audioAlertsPrimed ? (
+                  <button
+                    onClick={primeAudioContext}
+                    className="w-full mb-6 p-4 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 rounded-[20px] flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                  >
+                    <span className="text-xl animate-bounce">🛎️</span>
+                    <div className="text-left">
+                      <span className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest block">Enable Audio Alerts</span>
+                      <span className="text-[9px] text-amber-400/80 block">Click to unlock and test digital double service bell</span>
+                    </div>
+                  </button>
+                ) : (
+                  <div className="w-full mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-[20px] flex items-center justify-center gap-3">
+                    <span className="text-xl">🔔</span>
+                    <div className="text-left">
+                      <span className="text-[11px] font-extrabold text-green-400 uppercase tracking-widest block">Chime Alert Primed</span>
+                      <span className="text-[9px] text-green-500/80 block">Double electronic bell notification active</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Real-Time Food Preparation Queue status */}
                 <div className="space-y-3">

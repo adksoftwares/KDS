@@ -12,6 +12,42 @@ import * as OTPAuth from 'otpauth';
 const STORAGE_KEY_AUTH   = 'kds_auth';
 const STORAGE_KEY_SECRET = 'kds_totp_secret_';
 
+// ─── Startup Automatic Seeder for Verified Test Users ───────────────────────
+if (typeof window !== 'undefined' && !localStorage.getItem('mock_users')) {
+  const seedUsers = [
+    {
+      id: "REG-2026-1111",
+      name: "John Doe (Test User)",
+      email: "john@restaurant.com",
+      phone: "+94 77 111 2222",
+      isVerified: true,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "REG-2026-2222",
+      name: "Sarah Conner (Test User)",
+      email: "sarah@restaurant.com",
+      phone: "+94 77 222 3333",
+      isVerified: true,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "REG-2026-3333",
+      name: "David Miller (Test User)",
+      email: "david@restaurant.com",
+      phone: "+94 77 333 4444",
+      isVerified: true,
+      created_at: new Date().toISOString()
+    }
+  ];
+  localStorage.setItem('mock_users', JSON.stringify(seedUsers));
+  seedUsers.forEach(u => {
+    localStorage.setItem('verified_user_' + u.email, JSON.stringify(u));
+  });
+  console.log("[KDS Seeder] Automatically seeded 3 verified test user profiles.");
+}
+
+
 // ─── Session helpers ──────────────────────────────────────────────────────────
 export const getSession = () => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY_AUTH)); }
