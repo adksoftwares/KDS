@@ -189,7 +189,8 @@ export const updateOrderStatus = async (orderId, newStatus) => {
         return { 
           ...o, 
           status: newStatus, 
-          completed_at: newStatus === 'completed' ? new Date().toISOString() : null 
+          completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
+          bell_triggered: newStatus === 'completed' ? true : o.bell_triggered
         };
       }
       return o;
@@ -204,6 +205,7 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     const updates = { status: newStatus };
     if (newStatus === 'completed') {
       updates.completed_at = serverTimestamp();
+      updates.bell_triggered = true;
     }
     await updateDoc(orderDoc, updates);
   } catch (error) {
@@ -294,3 +296,68 @@ export const saveManagerProfile = async (email, profileData) => {
     throw error;
   }
 };
+
+// ─── Customer Mobile App Real-Time Listeners ────────────────────────────────────
+
+export const listenToUserActiveOrders = (userId, callback) => {
+  if (useOfflineMock) {
+    const triggerCallback = () => {
+      const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]')
+        .filter(o => o.user_id === userId);
+      mockOrders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      callback(mockOrders);
+    };
+
+    window.addEventListener('mock_orders_update', triggerCallback);
+    triggerCallback();
+
+    return () => {
+      window.removeEventListener('mock_orders_update', triggerCallback);
+    };
+  }
+
+  const ordersCol = collection(db, 'orders');
+  const q = query(
+    ordersCol,
+    where('user_id', '==', userId),
+    orderBy('created_at', 'asc')
+  );
+
+  return onSnapshot(q, (snapshot) => {
+    const orders = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        created_at: data.created_at ? data.created_at.toDate().toISOString() : new Date().toISOString(),
+        completed_at: data.completed_at ? data.completed_at.toDate().toISOString() : null
+      };
+    });
+    callback(orders);
+  }, (error) => {
+    console.error("Error listening to user active orders:", error);
+  });
+};
+
+export const acknowledgeOrderBell = async (orderId) => {
+  if (useOfflineMock) {
+    const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]');
+    const updated = mockOrders.map(o => {
+      if (o.id === orderId) {
+        return { ...o, bell_triggered: false };
+      }
+      return o;
+    });
+    localStorage.setItem('mock_orders', JSON.stringify(updated));
+    window.dispatchEvent(new Event('mock_orders_update'));
+    return;
+  }
+
+  try {
+    const orderDoc = doc(db, 'orders', orderId);
+    await updateDoc(orderDoc, { bell_triggered: false });
+  } catch (error) {
+    console.error("Error acknowledging order bell:", error);
+  }
+};
+

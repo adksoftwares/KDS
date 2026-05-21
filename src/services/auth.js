@@ -203,3 +203,117 @@ export const sendOTPEmail = async (email, otp) => {
     return false;
   }
 };
+
+// ─── Customer: Split Mobile App User Registration & OTP flow ───────────────────
+
+export const signUpUser = async (name, email, phone) => {
+  try {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    // Generate a secure 6-digit numeric OTP code
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store in-flight registration request
+    const pendingData = {
+      name: name.trim(),
+      email: trimmedEmail,
+      phone: phone.trim(),
+      otp,
+      created_at: Date.now()
+    };
+    
+    localStorage.setItem('pending_user_otp_' + trimmedEmail, JSON.stringify(pendingData));
+    console.log(`[OTP Simulation] Sent verification code to ${email}: ${otp}`);
+    
+    // Attempt sending a real SMTP email for premium UX!
+    await sendOTPEmail(trimmedEmail, otp);
+    
+    return { ok: true, simulatedOtp: otp };
+  } catch (error) {
+    console.error("Error in signUpUser:", error);
+    return { ok: false, error: "Failed to initiate registration." };
+  }
+};
+
+export const verifyUserOTP = async (email, enteredCode) => {
+  try {
+    const trimmedEmail = email.trim().toLowerCase();
+    const storedDataStr = localStorage.getItem('pending_user_otp_' + trimmedEmail);
+    
+    if (!storedDataStr) {
+      return { ok: false, error: "No active registration request found for this email." };
+    }
+    
+    const storedData = JSON.parse(storedDataStr);
+    
+    if (storedData.otp !== enteredCode.trim()) {
+      return { ok: false, error: "Invalid verification code. Please check and try again." };
+    }
+    
+    // Check expiration (valid for 10 minutes)
+    if (Date.now() - storedData.created_at > 10 * 60 * 1000) {
+      return { ok: false, error: "Verification code has expired. Please sign up again." };
+    }
+    
+    // Generate a unique registration number (REG-2026-XXXX)
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const regNo = `REG-2026-${randomSuffix}`;
+    
+    const userProfile = {
+      id: regNo,
+      name: storedData.name,
+      email: storedData.email,
+      phone: storedData.phone,
+      isVerified: true,
+      created_at: new Date().toISOString()
+    };
+    
+    // Save to verified users pool
+    localStorage.setItem('verified_user_' + trimmedEmail, JSON.stringify(userProfile));
+    
+    // Maintain a master list of mock users for lookup in staff scan module
+    const mockUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
+    mockUsers.push(userProfile);
+    localStorage.setItem('mock_users', JSON.stringify(mockUsers));
+    
+    // Clean up temporary OTP data
+    localStorage.removeItem('pending_user_otp_' + trimmedEmail);
+    
+    // Initialize session for direct app login
+    localStorage.setItem('kds_user_session', JSON.stringify(userProfile));
+    
+    return { ok: true, user: userProfile };
+  } catch (error) {
+    console.error("Error in verifyUserOTP:", error);
+    return { ok: false, error: "Verification failed." };
+  }
+};
+
+export const loginUser = async (email) => {
+  try {
+    const trimmedEmail = email.trim().toLowerCase();
+    const verifiedUserStr = localStorage.getItem('verified_user_' + trimmedEmail);
+    
+    if (!verifiedUserStr) {
+      return { ok: false, error: "No account found with this email. Please sign up first." };
+    }
+    
+    const userProfile = JSON.parse(verifiedUserStr);
+    localStorage.setItem('kds_user_session', JSON.stringify(userProfile));
+    
+    return { ok: true, user: userProfile };
+  } catch (error) {
+    console.error("Error in loginUser:", error);
+    return { ok: false, error: "Login failed." };
+  }
+};
+
+export const getUserSession = () => {
+  try { return JSON.parse(localStorage.getItem('kds_user_session')); }
+  catch { return null; }
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem('kds_user_session');
+};
+
