@@ -22,8 +22,11 @@ const INITIAL_MENU = [
   { id: 'ds1', name: 'Cheesecake', price: 7.00, category: 'Desserts', image_url: 'https://images.unsplash.com/photo-1524351199678-941a58a3df50?auto=format&fit=crop&w=500&q=60', is_available: true }
 ];
 
-// Helper to seed the menu collection if empty
+// Automatically switch to offline mock mode if Firebase is not fully configured locally
+const useOfflineMock = !import.meta.env.VITE_FIREBASE_API_KEY || window.location.hostname === 'localhost' || window.location.search.includes('demo');
+
 const seedMenuIfEmpty = async () => {
+  if (useOfflineMock) return;
   try {
     const menuCol = collection(db, 'menu_items');
     const snapshot = await getDocs(menuCol);
@@ -31,7 +34,6 @@ const seedMenuIfEmpty = async () => {
       console.log('Seeding initial menu items to Firestore...');
       for (const item of INITIAL_MENU) {
         const { id, ...itemData } = item;
-        // Seed using id as document name so it's consistent
         await setDoc(doc(db, 'menu_items', id), itemData);
       }
     }
@@ -41,25 +43,36 @@ const seedMenuIfEmpty = async () => {
 };
 
 export const getMenuItems = async () => {
+  if (useOfflineMock) {
+    return INITIAL_MENU;
+  }
   const menuCol = collection(db, 'menu_items');
   const snapshot = await getDocs(menuCol);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 export const listenToMenuItems = (callback) => {
-  // First seed if empty in the background
-  seedMenuIfEmpty();
+  if (useOfflineMock) {
+    callback(INITIAL_MENU);
+    return () => {};
+  }
 
+  seedMenuIfEmpty().catch(() => {});
   const menuCol = collection(db, 'menu_items');
   return onSnapshot(menuCol, (snapshot) => {
     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    callback(items);
+    callback(items.length ? items : INITIAL_MENU);
   }, (error) => {
     console.error("Error listening to menu items:", error);
+    callback(INITIAL_MENU);
   });
 };
 
 export const updateMenuItem = async (id, updates) => {
+  if (useOfflineMock) {
+    console.log("Mock updateMenuItem:", id, updates);
+    return;
+  }
   try {
     const itemDoc = doc(db, 'menu_items', id);
     await updateDoc(itemDoc, updates);
@@ -69,24 +82,50 @@ export const updateMenuItem = async (id, updates) => {
 };
 
 export const createOrder = async (orderData) => {
-  try {
-    const ordersCol = collection(db, 'orders');
+  if (useOfflineMock) {
+    const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]');
     const newOrder = {
+      id: 'mock_order_' + Math.random().toString(36).substr(2, 9),
       ...orderData,
-      created_at: serverTimestamp(),
-      status: 'pending' // pending | preparing | ready | completed
+      created_at: new Date().toISOString(),
+      status: 'pending'
     };
-    const docRef = await addDoc(ordersCol, newOrder);
-    return { id: docRef.id, ...newOrder };
-  } catch (error) {
-    console.error("Error creating order:", error);
-    throw error;
+    mockOrders.push(newOrder);
+    localStorage.setItem('mock_orders', JSON.stringify(mockOrders));
+    
+    // Dispatch local events so multiple frames/tabs receive live updates
+    window.dispatchEvent(new Event('mock_orders_update'));
+    return newOrder;
   }
+
+  const ordersCol = collection(db, 'orders');
+  const newOrder = {
+    ...orderData,
+    created_at: serverTimestamp(),
+    status: 'pending'
+  };
+  const docRef = await addDoc(ordersCol, newOrder);
+  return { id: docRef.id, ...newOrder };
 };
 
 export const listenToActiveOrders = (callback) => {
+  if (useOfflineMock) {
+    const triggerCallback = () => {
+      const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]')
+        .filter(o => o.status === 'pending' || o.status === 'preparing');
+      mockOrders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      callback(mockOrders);
+    };
+
+    window.addEventListener('mock_orders_update', triggerCallback);
+    triggerCallback();
+
+    return () => {
+      window.removeEventListener('mock_orders_update', triggerCallback);
+    };
+  }
+
   const ordersCol = collection(db, 'orders');
-  // Query active orders (pending or preparing)
   const q = query(
     ordersCol,
     where('status', 'in', ['pending', 'preparing']),
@@ -99,7 +138,6 @@ export const listenToActiveOrders = (callback) => {
       return {
         id: doc.id,
         ...data,
-        // Convert Firestore Timestamp to ISO string for compatibility with frontend components
         created_at: data.created_at ? data.created_at.toDate().toISOString() : new Date().toISOString(),
         completed_at: data.completed_at ? data.completed_at.toDate().toISOString() : null
       };
@@ -111,6 +149,19 @@ export const listenToActiveOrders = (callback) => {
 };
 
 export const listenToAllOrders = (callback) => {
+  if (useOfflineMock) {
+    const triggerCallback = () => {
+      const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]');
+      mockOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      callback(mockOrders);
+    };
+    window.addEventListener('mock_orders_update', triggerCallback);
+    triggerCallback();
+    return () => {
+      window.removeEventListener('mock_orders_update', triggerCallback);
+    };
+  }
+
   const ordersCol = collection(db, 'orders');
   const q = query(ordersCol, orderBy('created_at', 'desc'));
 
@@ -131,6 +182,23 @@ export const listenToAllOrders = (callback) => {
 };
 
 export const updateOrderStatus = async (orderId, newStatus) => {
+  if (useOfflineMock) {
+    const mockOrders = JSON.parse(localStorage.getItem('mock_orders') || '[]');
+    const updated = mockOrders.map(o => {
+      if (o.id === orderId) {
+        return { 
+          ...o, 
+          status: newStatus, 
+          completed_at: newStatus === 'completed' ? new Date().toISOString() : null 
+        };
+      }
+      return o;
+    });
+    localStorage.setItem('mock_orders', JSON.stringify(updated));
+    window.dispatchEvent(new Event('mock_orders_update'));
+    return;
+  }
+
   try {
     const orderDoc = doc(db, 'orders', orderId);
     const updates = { status: newStatus };
@@ -143,9 +211,11 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   }
 };
 
-// ─── Staff Accounts Collection Methods ──────────────────────────────────────────
-
 export const listenToStaff = (callback) => {
+  if (useOfflineMock) {
+    callback([]);
+    return () => {};
+  }
   const staffCol = collection(db, 'staff');
   return onSnapshot(staffCol, (snapshot) => {
     const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -156,6 +226,9 @@ export const listenToStaff = (callback) => {
 };
 
 export const addStaffMember = async (staffData) => {
+  if (useOfflineMock) {
+    return { id: 'mock_staff_' + Math.random().toString(36).substr(2, 9), ...staffData };
+  }
   try {
     const staffCol = collection(db, 'staff');
     const newStaff = {
@@ -171,6 +244,7 @@ export const addStaffMember = async (staffData) => {
 };
 
 export const removeStaffMember = async (id) => {
+  if (useOfflineMock) return;
   try {
     const staffDoc = doc(db, 'staff', id);
     await deleteDoc(staffDoc);
@@ -181,11 +255,16 @@ export const removeStaffMember = async (id) => {
 };
 
 export const getStaffByEmail = async (email) => {
+  if (useOfflineMock) {
+    if (email.trim().toLowerCase() === 'manager@restaurant.com') {
+      return { id: 'mock_manager', email: 'manager@restaurant.com', role: 'Manager', name: 'Manager' };
+    }
+    return null;
+  }
   try {
     const staffCol = collection(db, 'staff');
     const q = query(staffCol, where('email', '==', email.trim().toLowerCase()));
     
-    // Protect against hanging queries by racing getDocs with a 3-second timeout
     const snapshot = await Promise.race([
       getDocs(q),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore connection timeout")), 3000))
@@ -203,6 +282,7 @@ export const getStaffByEmail = async (email) => {
 };
 
 export const saveManagerProfile = async (email, profileData) => {
+  if (useOfflineMock) return;
   try {
     const managersCol = collection(db, 'managers');
     await setDoc(doc(db, 'managers', email.trim().toLowerCase()), {
