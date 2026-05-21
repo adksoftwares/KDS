@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signUpUser, verifyUserOTP, loginUser, getUserSession, logoutUser } from '../../services/auth';
 import { listenToUserActiveOrders, acknowledgeOrderBell } from '../../services/db';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function UserMobileApp() {
   const [view, setView] = useState('register'); // register | verify | login | profile
@@ -401,10 +402,14 @@ export default function UserMobileApp() {
                   <strong className="text-lg text-purple-400 tracking-wider font-mono select-all block">{currentUser.id}</strong>
 
                   {/* QR Code Container */}
-                  <div className="w-48 h-48 bg-white p-2 rounded-2xl mx-auto my-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex items-center justify-center relative">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${currentUser.id}&color=0f172a&bgcolor=ffffff`}
-                      alt="Customer QR Code"
+                  <div className="w-48 h-48 bg-white p-3 rounded-2xl mx-auto my-4 shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex items-center justify-center relative">
+                    <QRCodeSVG 
+                      value={currentUser.id}
+                      size={160}
+                      bgColor={"#ffffff"}
+                      fgColor={"#0f172a"}
+                      level={"H"}
+                      includeMargin={false}
                       className="w-full h-full object-contain"
                     />
                   </div>
