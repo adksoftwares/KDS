@@ -11,6 +11,8 @@ A high-performance, real-time Kitchen Display System (KDS) and Table-Side Orderi
 
 ![KDS Portfolio Banner](assets/kds_portfolio_banner.png)
 
+🎬 **[Watch the High-Fidelity KDS Video Demonstration (MP4)](https://github.com/adksoftwares/KDS/raw/main/assets/kds_demo.mp4)**
+
 ---
 
 ## 🌟 Project Ecosystem
